@@ -5,4 +5,4 @@
 - `bitstream/`: exported hardware and bitstream (same as board 2)
 - `sdk_src/`: `master.c`, `spi_frame.h`
 
-Sends a counter to board 2 over SPI every 100 ms and simulated RSSI lines to the PC over UART. See the [main README](../README.md).
+Sends a counter to board 2 over SPI every 100 ms, and the number of frames sent to the PC over UART. See the [main README](../README.md).

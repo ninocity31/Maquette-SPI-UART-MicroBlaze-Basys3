@@ -5,8 +5,8 @@
 We want to simulate SPI communication between an FPGA and an SPI interface.
 We use two FPGA boards: one board controls the other over SPI.
 
-- **Board 1 (master)** sends a counter over SPI every 100 ms. It also sends measurements to a PC over UART.
-- **Board 2 (slave)** receives the counter and shows it on its LEDs and its display.
+- **Board 1 (master)** sends a counter over SPI every 100 ms. It is the only board connected to the PC: it sends the number of frames sent over UART.
+- **Board 2 (slave)** receives the counter and shows it on its LEDs and its display. It does not talk to the PC.
 
 Both boards use the same FPGA design: a MicroBlaze processor with an SPI block, a UART block and a GPIO block.
 Only the C program is different.
@@ -35,7 +35,7 @@ Only the C program is different.
 | Processor System Reset | Reset | BTNC button in, all blocks out |
 | MicroBlaze + 64 KB memory + MDM | Runs the C program | AXI bus (made with *Run Block Automation*) |
 | AXI Interconnect | Bus between the processor and the blocks | UART Lite, Quad SPI, GPIO |
-| AXI UART Lite | Link to the PC | `usb_uart` (Board tab) |
+| AXI UART Lite | Link to the PC (used by board 1 only) | `usb_uart` (Board tab) |
 | AXI Quad SPI | SPI link between the boards | `SPI_0` → *Make External* → Pmod JA |
 | AXI GPIO (2 channels) | LEDs and display | Channel 1 → `afficheur.vhd`, channel 2 → `led_16bits` |
 | `afficheur.vhd` | Drives the 4-digit display | `HEX` ← GPIO channel 1; `SEPT_SEG`, `AN` → *Make External* |
@@ -91,8 +91,8 @@ Board 2 uses a frame only when CS goes back high, and only if the frame is valid
 
 ## Code
 
-- **`master.c` (board 1):** shows `1111` and all LEDs for 1 s at start-up, then keeps `1111`. Every 100 ms, it adds 1 to the counter, sends it in an SPI frame, and sends a `$RSSI` line to the PC.
-- **`slave.c` (board 2):** shows `2222` and every other LED at start-up. Then it waits for frames and shows the counter: in binary on the LEDs, in decimal on the display.
+- **`master.c` (board 1):** shows `1111` and all LEDs for 1 s at start-up, then keeps `1111`. Every 100 ms, it adds 1 to the counter, sends it in an SPI frame, and sends a line `$TX,<frames sent>,<frames rejected>` to the PC.
+- **`slave.c` (board 2):** shows `2222` and every other LED at start-up. Then it waits for frames and shows the counter: in binary on the LEDs, in decimal on the display. It tells the master on MISO if the previous frame was valid. It does not use the UART.
 - **`spi_frame.h`:** the frame format, shared by both programs.
 
 From the PC terminal of board 1, you can type `p` (pause), `r` (run), `+` (faster) or `-` (slower).
@@ -102,6 +102,6 @@ From the PC terminal of board 1, you can type `p` (pause), `r` (run), `+` (faste
 1. Connect the boards with both boards switched off, then plug in both USB cables.
 2. Open SDK 2019.1 with `Board_X/project/Communication_SPI.sdk` as workspace. Use *File → Import → Existing Projects into Workspace* on that folder, then *Build All*.
 3. For each board: *Xilinx → Program FPGA*, select the board's cable, and replace `bootloop` with the program's `.elf` file. Program board 2 first, then board 1.
-4. Open a serial terminal at 9600 baud on each board.
+4. Open a serial terminal at 9600 baud on the COM port of board 1.
 
-**Result:** board 1 shows `1111`. Board 2 counts on its LEDs and its display. The PC receives `$RSSI` lines.
+**Result:** board 1 shows `1111`. Board 2 counts on its LEDs and its display. The PC receives `$TX` lines with the number of frames sent.
