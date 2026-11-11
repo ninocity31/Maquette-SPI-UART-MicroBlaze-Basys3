@@ -7,8 +7,8 @@ Une carte Basys 3 **maître** (MicroBlaze) envoie des trames SPI à une seconde 
 
 | Dossier | Contenu |
 |---|---|
-| [`Carte_1_Maitre/`](Carte_1_Maitre) | Carte maître : sources Vivado, bitstream, programme `maitre.c` |
-| [`Carte_2_Esclave/`](Carte_2_Esclave) | Carte esclave : mêmes sources Vivado et même bitstream, programme `esclave.c` |
+| [`Carte_1_Maitre/`](Carte_1_Maitre) | Carte maître : **projet complet Vivado + SDK** (`projet/`), sources seules, bitstream, programme `maitre.c` |
+| [`Carte_2_Esclave/`](Carte_2_Esclave) | Carte esclave : **projet complet Vivado + SDK** (`projet/`), mêmes sources Vivado et même bitstream, programme `esclave.c` |
 | [`docs/figures/`](docs/figures) | Schémas et captures d'écran utilisés dans ce README |
 
 ---
@@ -225,17 +225,37 @@ L'esclave n'applique la trame **qu'à la remontée de CS** (comme un registre à
 - Vivado 2019.1 et Xilinx SDK 2019.1 (ou Vivado + Vitis Classic)
 - Un terminal série (Tera Term, PuTTY, Hercules…) ou Python 3 + `pyserial`
 
-### Option rapide : utiliser le bitstream fourni
+### Option 1 : ouvrir directement les projets complets (recommandé)
+Chaque carte contient un dossier `projet/` avec le projet Vivado 2019.1 et l'espace de travail SDK 2019.1 :
+```
+CarteX/projet/
+├── Communication_SPI.xpr          ← projet Vivado
+├── Communication_SPI.srcs/        ← block design, IP, afficheur.vhd, pins.xdc
+└── Communication_SPI.sdk/
+    ├── design_1_wrapper.hdf
+    ├── design_1_wrapper_hw_platform_0/   ← plateforme matérielle (+ .bit)
+    ├── Communication_SPI_BASYS3_bsp/     ← BSP (drivers xspi, xgpio, uartlite)
+    └── Communication_SPI_BASYS3/         ← application (maitre.c ou esclave.c)
+```
+1. **Vivado** : *File → Open Project* → `CarteX/projet/Communication_SPI.xpr`. Les résultats de synthèse et d'implémentation (`.runs`, `.cache`) ne sont pas versionnés : lancer *Generate Bitstream* pour les recréer.
+2. **SDK** : lancer SDK 2019.1 en choisissant comme espace de travail le dossier `CarteX/projet/Communication_SPI.sdk`, puis *File → Import → General → Existing Projects into Workspace*, sélectionner ce même dossier et cocher les 3 projets (plateforme, BSP, application). *Project → Build All*.
+3. Programmer la carte et lancer l'application (*Program FPGA*, puis *Run As → Launch on Hardware*).
+
+Les journaux, les fichiers `.metadata` de SDK et les dossiers `Debug` ne sont pas inclus : ils contiennent des chemins propres à un PC et sont regénérés automatiquement.
+
+### Option 2 : utiliser seulement le bitstream fourni
 Le dossier `bitstream/` de chaque carte contient le fichier `design_1_wrapper.hdf` exporté (qui inclut le bitstream) et le `.bit`. Le bitstream est **le même** pour les deux cartes.
 > Ce bitstream a été généré le 8 novembre 2026, avant la correction de `afficheur.vhd` et l'ajout du pull-up sur `ss_io` dans `pins.xdc`. Il fonctionne, mais regénère-le avec les sources du dossier `vivado/` pour profiter de ces corrections.
 
-### 1. Recréer le matériel (Vivado 2019.1)
+### Option 3 : tout recréer à partir des sources
+
+#### 1. Recréer le matériel (Vivado 2019.1)
 1. Créer un projet RTL pour la carte **Basys 3** (onglet *Boards*), en VHDL.
 2. *Add Sources* : `vivado/afficheur.vhd` ; *Add Constraints* : `vivado/pins.xdc`.
 3. Recréer le block design : dans la console Tcl de Vivado, `source vivado/design_1_bd.tcl` (script extrait de l'export matériel). On peut aussi ajouter directement `vivado/design_1.bd`. Puis *Validate Design*, puis clic droit sur `design_1` → *Create HDL Wrapper* (laisser Vivado le gérer ; `design_1_wrapper.vhd` est fourni seulement pour référence).
 4. *Generate Bitstream*, puis *File → Export → Export Hardware* en cochant **Include bitstream**.
 
-### 2. Créer les deux applications (SDK 2019.1)
+#### 2. Créer les deux applications (SDK 2019.1)
 1. *File → Launch SDK* (ou *New Application Project* → *New…* et choisir le `.hdf`). Vérifier que le processeur est **`microblaze_0`** et non `ps7_cortexa9_0` (plateforme ZC702 proposée par défaut).
 2. **Maître** : *New → Application Project*, nom `Carte1_Maitre`, modèle *Empty Application*. Clic droit sur `src` → *Import → General → File System* → `Carte_1_Maitre/sdk_src/` (`maitre.c`, `trame_spi.h`).
 3. **Esclave** : *New → Application Project*, nom `Carte2_Esclave`, même plateforme, BSP existant, *Empty Application*. Importer `Carte_2_Esclave/sdk_src/` (`esclave.c`, `trame_spi.h`).
