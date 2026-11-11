@@ -18,7 +18,7 @@
 					<folderInfo id="xilinx.gnu.mb.exe.debug.1878189637." name="/" resourcePath="">
 						<toolChain id="xilinx.gnu.mb.exe.debug.toolchain.1050812045" name="Xilinx MicroBlaze GNU Toolchain" superClass="xilinx.gnu.mb.exe.debug.toolchain">
 							<targetPlatform binaryParser="com.xilinx.sdk.managedbuilder.XELF.mb" id="xilinx.mb.target.gnu.base.debug.182209204" isAbstract="false" name="Debug Platform" superClass="xilinx.mb.target.gnu.base.debug"/>
-							<builder buildPath="${workspace_loc:/Communication_SPI_BASYS3}/Debug" enableAutoBuild="true" id="xilinx.gnu.mb.toolchain.builder.debug.668171636" managedBuildOn="true" name="GNU make.Debug" superClass="xilinx.gnu.mb.toolchain.builder.debug"/>
+							<builder buildPath="${workspace_loc:/Carte2_Esclave}/Debug" enableAutoBuild="true" id="xilinx.gnu.mb.toolchain.builder.debug.668171636" managedBuildOn="true" name="GNU make.Debug" superClass="xilinx.gnu.mb.toolchain.builder.debug"/>
 							<tool id="xilinx.gnu.mb.c.toolchain.assembler.debug.314962006" name="MicroBlaze gcc assembler" superClass="xilinx.gnu.mb.c.toolchain.assembler.debug">
 								<option id="xilinx.gnu.mb.assembler.usele.78434206" superClass="xilinx.gnu.mb.assembler.usele" value="true" valueType="boolean"/>
 								<inputType id="xilinx.gnu.assembler.input.1533050103" superClass="xilinx.gnu.assembler.input"/>
@@ -102,7 +102,7 @@
 					<folderInfo id="xilinx.gnu.mb.exe.release.916907147." name="/" resourcePath="">
 						<toolChain id="xilinx.gnu.mb.exe.release.toolchain.1113391193" name="Xilinx MicroBlaze GNU Toolchain" superClass="xilinx.gnu.mb.exe.release.toolchain">
 							<targetPlatform binaryParser="com.xilinx.sdk.managedbuilder.XELF.mb" id="xilinx.mb.target.gnu.base.release.2039251628" isAbstract="false" name="Debug Platform" superClass="xilinx.mb.target.gnu.base.release"/>
-							<builder buildPath="${workspace_loc:/Communication_SPI_BASYS3}/Release" enableAutoBuild="true" id="xilinx.gnu.mb.toolchain.builder.release.978745141" managedBuildOn="true" name="GNU make.Release" superClass="xilinx.gnu.mb.toolchain.builder.release"/>
+							<builder buildPath="${workspace_loc:/Carte2_Esclave}/Release" enableAutoBuild="true" id="xilinx.gnu.mb.toolchain.builder.release.978745141" managedBuildOn="true" name="GNU make.Release" superClass="xilinx.gnu.mb.toolchain.builder.release"/>
 							<tool id="xilinx.gnu.mb.c.toolchain.assembler.release.347949919" name="MicroBlaze gcc assembler" superClass="xilinx.gnu.mb.c.toolchain.assembler.release">
 								<option id="xilinx.gnu.mb.assembler.usele.2043784341" superClass="xilinx.gnu.mb.assembler.usele" value="true" valueType="boolean"/>
 								<inputType id="xilinx.gnu.assembler.input.1001362431" superClass="xilinx.gnu.assembler.input"/>
@@ -172,7 +172,7 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="Communication_SPI_BASYS3.xilinx.gnu.mb.exe.1110548832" name="Xilinx MicroBlaze Executable" projectType="xilinx.gnu.mb.exe"/>
+		<project id="Carte2_Esclave.xilinx.gnu.mb.exe.1110548832" name="Xilinx MicroBlaze Executable" projectType="xilinx.gnu.mb.exe"/>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>

@@ -193,7 +193,9 @@ L'esclave n'applique la trame **qu'à la remontée de CS** (comme un registre à
 
 <img src="docs/figures/f_maitre.png" width="330">
 
-16 pas de −45° à +45°. Au pas *k* : LED *k* allumée, *k* à gauche, |RSSI| à droite (en BCD), RSSI simulé (−40 dBm sur la cible, −4 dB par pas d'écart, ±2 dB de bruit). Le maître montre aussi l'état sur ses propres LED : **les deux cartes doivent afficher la même chose**.
+À chaque pas (toutes les 100 ms), le maître incrémente un **compteur** et l'envoie à l'esclave : LED = compteur en binaire, afficheur = compteur en décimal (0000 à 9999, codé en BCD). En parallèle, il simule un balayage de 16 pas (−45° à +45°) et envoie au PC un RSSI simulé (−40 dBm sur la cible, −4 dB par pas d'écart, ±2 dB de bruit). **Le maître lui-même n'affiche rien qui bouge** : `1111` fixe et LED éteintes ; seul l'esclave montre le compteur.
+
+**Signatures de démarrage** (pour vérifier que chaque carte a le bon programme) : maître = `1111` + 16 LED allumées pendant 1 s ; esclave = `2222` + une LED sur deux, jusqu'à la première trame reçue.
 
 | Sens | Format |
 |---|---|
@@ -235,7 +237,7 @@ CarteX/projet/
     ├── design_1_wrapper.hdf
     ├── design_1_wrapper_hw_platform_0/   ← plateforme matérielle (+ .bit)
     ├── Communication_SPI_BASYS3_bsp/     ← BSP (drivers xspi, xgpio, uartlite)
-    └── Communication_SPI_BASYS3/         ← application (maitre.c ou esclave.c)
+    └── Communication_SPI_BASYS3/ ou Carte2_Esclave/ ← application (maitre.c / esclave.c)
 ```
 1. **Vivado** : *File → Open Project* → `CarteX/projet/Communication_SPI.xpr`. Les résultats de synthèse et d'implémentation (`.runs`, `.cache`) ne sont pas versionnés : lancer *Generate Bitstream* pour les recréer.
 2. **SDK** : lancer SDK 2019.1 en choisissant comme espace de travail le dossier `CarteX/projet/Communication_SPI.sdk`, puis *File → Import → General → Existing Projects into Workspace*, sélectionner ce même dossier et cocher les 3 projets (plateforme, BSP, application). *Project → Build All*.
@@ -274,8 +276,8 @@ Cartes **hors tension**, relier les connecteurs JA comme sur la figure de câbla
 
 ### 4. Programmer et lancer
 1. Brancher les deux cartes au PC.
-2. *Xilinx → Program FPGA* : choisir la carte esclave (câble JTAG), programmer. Puis *Run As → Launch on Hardware* sur `Carte2_Esclave` (onglet *Target Setup* de la configuration de lancement : choisir le même câble).
-3. Même chose avec la carte maître et `Carte1_Maitre`.
+2. *Xilinx → Program FPGA* : *Device → Select…* = câble de la carte esclave ; dans **Software Configuration**, remplacer `bootloop` par l'ELF de l'esclave ; *Program*. Le programme démarre seul (sinon *Program FPGA* ne charge que le circuit, et la carte reste sur `0000`).
+3. Même chose avec la carte maître et son ELF.
 4. Ouvrir un terminal à **9600 bauds, 8N1** sur le port COM de chaque carte. Appuyer sur **BTNC** (reset) si rien ne s'affiche.
 
 ### 5. Lire les mesures en Python
@@ -306,9 +308,9 @@ Envoyer `s.write(b"p")` pour mettre en pause, `b"r"` pour reprendre, `b"+"` / `b
 | N° | Essai | Résultat attendu | État |
 |---|---|---|---|
 | T1 | Maître seul, démarrage | `$INFO,… maitre … demarre`, `$INFO,SPI maitre OK` | à faire |
-| T2 | Maître seul, balayage | LED qui avance de 0 à 15, 16 `$RSSI` puis `$BEST` | à faire |
+| T2 | Maître seul | `1111` + 16 LED pendant 1 s, puis `1111` fixe ; 16 `$RSSI` puis `$BEST` | à faire |
 | T3 | SCK et CS à l'analyseur | 6 salves de 8 fronts à 1,25 MHz pendant CS = 0 (≈ 39 µs) | à faire |
-| T4 | Deux cartes reliées | Mêmes LED et afficheurs sur les deux cartes | à faire |
+| T4 | Deux cartes reliées | L'esclave passe de `2222` à un compteur : LED en binaire, afficheur 0001, 0002… | à faire |
 | T5 | Bilans de l'esclave | `$STAT,ok=16,long=0,sync=0,chk=0`, puis 32, 48… | à faire |
 | T6 | Champ `nack` de `$BEST` | Reste à 0 | à faire |
 | T7 | MOSI débranché | `$ERR,SYNC` ou `$ERR,CHK`, l'esclave garde son état | à faire |

@@ -148,8 +148,20 @@ int main(void)
 
     xil_printf("\r\n$INFO,MAQUETTE esclave SPI demarre\r\n");
 
-    if (init_gpio() != XST_SUCCESS || init_spi_esclave() != XST_SUCCESS) {
-        xil_printf("$ERR,INIT -> arret\r\n");
+    if (init_gpio() != XST_SUCCESS) {
+        xil_printf("$ERR,INIT GPIO -> arret\r\n");
+        while (1);
+    }
+
+    /* Signature de demarrage de la CARTE 2 (esclave) : "2222" sur l'afficheur
+     * et une LED sur deux. Elle reste visible jusqu'a la premiere trame
+     * valide recue du maitre.                                               */
+    XGpio_DiscreteWrite(&Gpio, GPIO_CANAL_AFF, 0x2222);
+    XGpio_DiscreteWrite(&Gpio, GPIO_CANAL_LED, 0x5555);
+    xil_printf("$INFO,signature carte 2 (esclave) : 2222 + LED une sur deux\r\n");
+
+    if (init_spi_esclave() != XST_SUCCESS) {
+        xil_printf("$ERR,INIT SPI -> arret\r\n");
         while (1);
     }
     n = lire_fifo_rx(tampon, 0);     /* on jette ce qui serait deja la */

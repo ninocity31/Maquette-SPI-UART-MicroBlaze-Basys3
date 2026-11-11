@@ -5,12 +5,11 @@
  * Ce que fait le programme (simulation d'un balayage en 16 pas) :
  *   - 16 pas de balayage (angle -45 deg a +45 deg, pas de 6 deg) ;
  *   - a chaque pas, il envoie UNE trame SPI de 6 octets a l'esclave
- *     (cf. trame_spi.h) :
- *        LED      : position du faisceau (une seule LED allumee sur 16)
- *        gauche   : numero du pas (00 a 15, ecrit en decimal)
- *        droite   : |RSSI| simule (ecrit en decimal)
- *   - il affiche le meme etat sur ses propres LED / 7 segments
- *     (les deux cartes doivent donc montrer exactement la meme chose) ;
+ *     (cf. trame_spi.h) contenant un compteur qui augmente de 1 :
+ *        LED       : valeur du compteur en binaire (16 bits)
+ *        afficheur : valeur du compteur en decimal (0000 a 9999)
+ *   - lui-meme n'affiche rien qui bouge : "1111" fixe, LED eteintes
+ *     (seule la carte esclave montre le compteur) ;
  *   - il envoie au PC, par l'UART (9600 bauds, 8N1), une ligne par pas :
  *        $RSSI,<pas>,<angle_deg>,<rssi_dBm>
  *     et une ligne de bilan par balayage :
@@ -56,6 +55,7 @@ static u32 err_spi  = 0;            /* echecs de XSpi_Transfer          */
 static u32 nack     = 0;            /* statuts d'erreur renvoyes par l'esclave */
 static int pause    = 0;
 static u32 pas_ms   = PAS_MS_DEFAUT;
+static u16 compteur = 0;            /* valeur envoyee a l'esclave        */
 
 /* ========================================================================= */
 /*  Initialisations                                                          */
@@ -113,13 +113,6 @@ static int spi_envoyer_trame(const u8 *tx, u8 *rx)
     return st;
 }
 
-/* Le maitre affiche le meme etat que celui qu'il envoie a l'esclave */
-static void afficher_local(u16 leds, u8 aff_g, u8 aff_d)
-{
-    XGpio_DiscreteWrite(&Gpio, GPIO_CANAL_LED, leds);
-    XGpio_DiscreteWrite(&Gpio, GPIO_CANAL_AFF, ((u32)aff_g << 8) | aff_d);
-}
-
 /* ========================================================================= */
 /*  Outils                                                                   */
 /* ========================================================================= */
@@ -172,8 +165,22 @@ int main(void)
 
     xil_printf("\r\n$INFO,MAQUETTE maitre SPI/UART demarre\r\n");
 
-    if (init_gpio() != XST_SUCCESS || init_spi() != XST_SUCCESS) {
-        xil_printf("$ERR,INIT -> arret\r\n");
+    if (init_gpio() != XST_SUCCESS) {
+        xil_printf("$ERR,INIT GPIO -> arret\r\n");
+        while (1);
+    }
+
+    /* Signature de demarrage de la CARTE 1 (maitre) : "1111" sur l'afficheur
+     * et les 16 LED allumees pendant 1 s. Si la carte reste bloquee ici,
+     * c'est l'initialisation du SPI qui ne se termine pas.                  */
+    XGpio_DiscreteWrite(&Gpio, GPIO_CANAL_AFF, 0x1111);
+    XGpio_DiscreteWrite(&Gpio, GPIO_CANAL_LED, 0xFFFF);
+    xil_printf("$INFO,signature carte 1 (maitre) : 1111 + 16 LED\r\n");
+    usleep(1000000);
+    XGpio_DiscreteWrite(&Gpio, GPIO_CANAL_LED, 0x0000);   /* puis : "1111" fixe, LED eteintes */
+
+    if (init_spi() != XST_SUCCESS) {
+        xil_printf("$ERR,INIT SPI -> arret\r\n");
         while (1);
     }
     xil_printf("$INFO,SPI maitre OK, SCK = 100 MHz / 80 = 1,25 MHz\r\n");
@@ -188,16 +195,17 @@ int main(void)
             int angle = ANGLE_DEBUT + k * ANGLE_PAS;
             int rssi  = rssi_simule(k, cible);
 
-            /* 1) consigne de "depointage" -> esclave */
-            u16 leds  = (u16)(1u << k);
-            u8  aff_g = en_bcd(k);
-            u8  aff_d = en_bcd(rssi);
+            /* 1) compteur -> esclave : LED = compteur en binaire,
+             *    afficheur = compteur en decimal (0000 a 9999)            */
+            compteur++;
+            u16 leds  = compteur;
+            u8  aff_g = en_bcd((compteur / 100) % 100);   /* milliers, centaines */
+            u8  aff_d = en_bcd(compteur % 100);           /* dizaines, unites    */
             trame_construire(tx, leds, aff_g, aff_d);
 
             if (spi_envoyer_trame(tx, rx) == XST_SUCCESS && rx[0] != STATUT_OK)
                 nack++;                     /* l'esclave a rejete la trame precedente */
-
-            afficher_local(leds, aff_g, aff_d);
+            /* le maitre n'affiche rien : il garde "1111" */
 
             /* 2) mesure -> IHM */
             xil_printf("$RSSI,%d,%d,%d\r\n", k, angle, rssi);

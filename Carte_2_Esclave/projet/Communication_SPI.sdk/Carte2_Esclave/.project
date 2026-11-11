@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>Communication_SPI_BASYS3</name>
+	<name>Carte2_Esclave</name>
 	<comment>Created by SDK v2019.1. Communication_SPI_BASYS3_bsp - microblaze_0</comment>
 	<projects>
 		<project>Communication_SPI_BASYS3_bsp</project>
