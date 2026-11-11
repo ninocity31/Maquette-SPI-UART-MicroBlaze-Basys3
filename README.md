@@ -63,13 +63,14 @@ Only the C program is different.
 | SCK | JA1 | JA1 |
 | CS | JA2 | **JA7** |
 | MOSI | JA3 | JA3 |
-| MISO | JA4 | JA4 |
+| MISO (not used) | JA4 | JA4 |
 | GND | JA5 | JA5 |
 
 ![Wiring](docs/figures/wiring.png)
 
 - The CS wire goes from JA2 (board 1) to JA7 (board 2).
 - GND must be connected.
+- MISO is not used by the code. The wire can stay or be removed.
 - Never connect the 3.3 V pins (JA6, JA12).
 
 ## SPI frame
@@ -91,11 +92,9 @@ Board 2 uses a frame only when CS goes back high, and only if the frame is valid
 
 ## Code
 
-- **`master.c` (board 1):** shows `1111` and all LEDs for 1 s at start-up, then keeps `1111`. Every 100 ms, it adds 1 to the counter, sends it in an SPI frame, and sends a line `$TX,<frames sent>,<frames rejected>` to the PC.
-- **`slave.c` (board 2):** shows `2222` and every other LED at start-up. Then it waits for frames and shows the counter: in binary on the LEDs, in decimal on the display. It tells the master on MISO if the previous frame was valid. It does not use the UART.
+- **`master.c` (board 1):** shows `1111` and all LEDs for 1 s at start-up, then keeps `1111`. Every 100 ms, it adds 1 to the counter, sends it in an SPI frame, and sends the line `Frames sent: N` to the PC.
+- **`slave.c` (board 2):** shows `2222` and every other LED at start-up. Then it waits for frames and shows the counter: in binary on the LEDs, in decimal on the display. It does not use the UART.
 - **`spi_frame.h`:** the frame format, shared by both programs.
-
-From the PC terminal of board 1, you can type `p` (pause), `r` (run), `+` (faster) or `-` (slower).
 
 ## How to use
 
@@ -104,4 +103,4 @@ From the PC terminal of board 1, you can type `p` (pause), `r` (run), `+` (faste
 3. For each board: *Xilinx → Program FPGA*, select the board's cable, and replace `bootloop` with the program's `.elf` file. Program board 2 first, then board 1.
 4. Open a serial terminal at 9600 baud on the COM port of board 1.
 
-**Result:** board 1 shows `1111`. Board 2 counts on its LEDs and its display. The PC receives `$TX` lines with the number of frames sent.
+**Result:** board 1 shows `1111`. Board 2 counts on its LEDs and its display. The PC receives `Frames sent: N` lines.
